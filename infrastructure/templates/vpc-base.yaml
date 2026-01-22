@@ -1,0 +1,25 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Description: VPC Core Infrastructure
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Environment name
+
+Resources:
+  LegalVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-vpc
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref LegalVPC
+    Export:
+      Name: !Sub ${EnvironmentName}-VPCId

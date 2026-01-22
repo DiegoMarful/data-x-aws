@@ -1,0 +1,35 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Description: Root stack - Legal Platform Infrastructure
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: Environment name (dev, staging, prod)
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+
+Resources:
+  # VPC Stack
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./infrastructure/templates/vpc-base.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+
+  # Database Stack (depende de VPC)
+  DatabaseStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: ./infrastructure/templates/database.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VPCId: !GetAtt VPCStack.Outputs.VPCId
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !GetAtt VPCStack.Outputs.VPCId
+    Export:
+      Name: !Sub ${EnvironmentName}-VPCId
