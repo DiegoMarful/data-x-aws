@@ -1,11 +1,11 @@
-name: Deploy Infrastructure
+name: Deploy Applications
 on:
   push:
     paths:
-      - 'infrastructure/**'
-      - '.github/workflows/deploy-infrastructure.yml'
+      - 'applications/**'
+      - '.github/workflows/deploy-applications.yml'
     branches: [ main ]
-  workflow_dispatch:  # Permite ejecución manual
+  workflow_dispatch:
     inputs:
       environment:
         description: 'Entorno a desplegar'
@@ -18,21 +18,34 @@ on:
           - prod
 
 jobs:
-  validate-templates:
+  validate-sam:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Validate CloudFormation Templates
+      - name: Validate SAM Template
+        working-directory: applications/lambda-process-docs
         run: |
-          echo "Validando templates CloudFormation..."
-          # Validar sintaxis básica
-          for file in infrastructure/templates/*.yaml; do
-            echo "Validando: $(basename $file)"
-            aws cloudformation validate-template --template-body file://$file || true
-          done
+          echo "Validando template SAM..."
+          sam validate
   
-  deploy-vpc:
-    needs: validate-templates
+  build-lambda:
+    needs: validate-sam
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install Dependencies
+        working-directory: applications/lambda-process-docs
+        run: |
+          echo "Instalando dependencias..."
+          npm ci --only=production
+  
+  deploy-lambda:
+    needs: build-lambda
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
@@ -44,40 +57,36 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
       
-      - name: Deploy VPC Stack
+      - name: Setup SAM CLI
         run: |
-          ENV=${{ github.event.inputs.environment || 'dev' }}
-          echo "Desplegando VPC para entorno: $ENV"
-          
-          aws cloudformation deploy \
-            --template-file infrastructure/templates/vpc-base.yaml \
-            --stack-name legal-platform-vpc-$ENV \
-            --parameter-overrides file://infrastructure/parameters/${ENV}-params.json \
-            --capabilities CAPABILITY_IAM \
-            --no-fail-on-empty-changeset
-  
-  deploy-storage:
-    needs: validate-templates
-    runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'dev' }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          echo "Instalando SAM CLI..."
+          pip install aws-sam-cli
       
-      - name: Deploy Storage Stack
+      - name: Deploy Lambda Function
+        working-directory: applications/lambda-process-docs
         run: |
           ENV=${{ github.event.inputs.environment || 'dev' }}
-          echo "Desplegando Storage para entorno: $ENV"
+          echo "Desplegando Lambda para entorno: $ENV"
           
-          # Solo parámetro EnvironmentName para storage
-          aws cloudformation deploy \
-            --template-file infrastructure/templates/storage.yaml \
+          # Obtener nombre del bucket S3 creado por infrastructure
+          BUCKET_NAME=$(aws cloudformation describe-stacks \
             --stack-name legal-platform-storage-$ENV \
-            --parameter-overrides EnvironmentName=$ENV \
-            --capabilities CAPABILITY_IAM \
-            --no-fail-on-empty-changeset
+            --query "Stacks[0].Outputs[?OutputKey=='DocumentsBucketName'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -z "$BUCKET_NAME" ]; then
+            echo "Bucket S3 no encontrado. Creando uno temporal..."
+            BUCKET_NAME="legal-docs-$ENV-${{ secrets.AWS_ACCOUNT_ID }}"
+          fi
+          
+          echo "Bucket S3: $BUCKET_NAME"
+          
+          # Construir y desplegar
+          sam build
+          
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
+            --stack-name lambda-process-docs-$ENV \
+            --parameter-overrides \
+              EnvironmentName=$ENV \
+              DocumentsBucketName=$BUCKET_NAME \
+            --capabilities CAPABILITY_IAM
