@@ -1,0 +1,29 @@
+{
+  "name": "lambda-process-docs",
+  "version": "1.0.0",
+  "description": "Lambda para procesar documentos legales",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "package": "sam package",
+    "deploy": "sam deploy"
+  },
+  "keywords": ["aws", "lambda", "legal", "documents"],
+  "author": "Equipo Legal Platform",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.1505.0",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "@types/node": "^20.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
