@@ -1,13 +1,40 @@
-﻿name: Deploy Infrastructure
+name: Deploy Infrastructure
 on:
   push:
     paths:
       - 'infrastructure/**'
+      - '.github/workflows/deploy-infrastructure.yml'
     branches: [ main ]
+  workflow_dispatch:  # Permite ejecución manual
+    inputs:
+      environment:
+        description: 'Entorno a desplegar'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
 
 jobs:
-  deploy:
+  validate-templates:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate CloudFormation Templates
+        run: |
+          echo "Validando templates CloudFormation..."
+          # Validar sintaxis básica
+          for file in infrastructure/templates/*.yaml; do
+            echo "Validando: $(basename $file)"
+            aws cloudformation validate-template --template-body file://$file || true
+          done
+  
+  deploy-vpc:
+    needs: validate-templates
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure AWS Credentials
@@ -15,8 +42,42 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Deploy to AWS
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      
+      - name: Deploy VPC Stack
         run: |
-          echo "Deploying infrastructure..."
-          aws cloudformation deploy --template-file root-stack.yaml --stack-name legal-platform-dev --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+          ENV=${{ github.event.inputs.environment || 'dev' }}
+          echo "Desplegando VPC para entorno: $ENV"
+          
+          aws cloudformation deploy \
+            --template-file infrastructure/templates/vpc-base.yaml \
+            --stack-name legal-platform-vpc-$ENV \
+            --parameter-overrides file://infrastructure/parameters/${ENV}-params.json \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+  
+  deploy-storage:
+    needs: validate-templates
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      
+      - name: Deploy Storage Stack
+        run: |
+          ENV=${{ github.event.inputs.environment || 'dev' }}
+          echo "Desplegando Storage para entorno: $ENV"
+          
+          # Solo parámetro EnvironmentName para storage
+          aws cloudformation deploy \
+            --template-file infrastructure/templates/storage.yaml \
+            --stack-name legal-platform-storage-$ENV \
+            --parameter-overrides EnvironmentName=$ENV \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
