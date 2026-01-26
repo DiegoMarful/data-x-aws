@@ -1,0 +1,14 @@
+{
+  "EnvironmentName": "prod",
+  "VpcCidr": "10.2.0.0/16",
+  "SubnetDevCidr": "10.2.10.0/24",
+  "SubnetProdCidr": "10.2.20.0/24",
+  "SubnetAdminCidr": "10.2.30.0/24",
+  "EnablePublicAccess": false,
+  "InstanceType": "t3.large",
+  "MinSize": 2,
+  "MaxSize": 6,
+  "DatabaseInstanceClass": "db.r5.large",
+  "BucketRetentionDays": 365,
+  "AlarmEmail": "prod-alerts@empresa.com"
+}
