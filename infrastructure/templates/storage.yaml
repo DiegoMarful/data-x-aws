@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Buckets S3 básicos (sin dependencias de VPC)'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'Development'
+    Description: 'Nombre del entorno'
+
+Resources:
+  # BUCKET PARA DOCUMENTOS (sin VPC dependency)
+  DocumentsBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-legal-documents-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Purpose
+          Value: 'DocumentStorage'
+
+  # BUCKET PARA LOGS (opcional)
+  LogsBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-logs-${AWS::AccountId}'
+      LifecycleConfiguration:
+        Rules:
+          - Id: 'ArchiveOldLogs'
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 90
+                StorageClass: STANDARD_IA
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Purpose
+          Value: 'LogStorage'
+
+Outputs:
+  DocumentsBucketName:
+    Description: 'Nombre del bucket de documentos'
+    Value: !Ref DocumentsBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-DocumentsBucketName'
+
+  LogsBucketName:
+    Description: 'Nombre del bucket de logs'
+    Value: !Ref LogsBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-LogsBucketName'
