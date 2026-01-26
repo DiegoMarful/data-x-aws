@@ -1,25 +1,110 @@
-﻿AWSTemplateFormatVersion: '2010-09-09'
-Description: VPC Core Infrastructure
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'VPC base con subredes para Dev, Prod y Admin'
 
 Parameters:
   EnvironmentName:
     Type: String
-    Description: Environment name
+    Default: 'Development'
+    Description: 'Nombre del entorno (Dev, Staging, Prod)'
 
 Resources:
-  LegalVPC:
-    Type: AWS::EC2::VPC
+  # VPC PRINCIPAL
+  VPC:
+    Type: 'AWS::EC2::VPC'
     Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
+      CidrBlock: '10.0.0.0/16'
       EnableDnsHostnames: true
+      EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value: !Sub ${EnvironmentName}-vpc
+          Value: !Sub '${EnvironmentName}-VPC'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # INTERNET GATEWAY
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-IGW'
+
+  # ATTACH IGW TO VPC
+  VPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # SUBNET 1 - DESARROLLO (10.0.10.0/24)
+  SubnetDev:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: '10.0.10.0/24'
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-Subnet-Dev'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: 'Dev'
+
+  # SUBNET 2 - PRODUCCIÓN (10.0.20.0/24)
+  SubnetProd:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: '10.0.20.0/24'
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-Subnet-Prod'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: 'Prod'
+
+  # SUBNET 3 - ADMIN-NORMAS (10.0.30.0/24)
+  SubnetAdmin:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: '10.0.30.0/24'
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-Subnet-Admin'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: 'Admin'
 
 Outputs:
   VPCId:
-    Description: VPC ID
-    Value: !Ref LegalVPC
+    Description: 'ID de la VPC creada'
+    Value: !Ref VPC
     Export:
-      Name: !Sub ${EnvironmentName}-VPCId
+      Name: !Sub '${AWS::StackName}-VPCId'
+
+  SubnetDevId:
+    Description: 'ID de la subnet de Desarrollo'
+    Value: !Ref SubnetDev
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetDevId'
+
+  SubnetProdId:
+    Description: 'ID de la subnet de Producción'
+    Value: !Ref SubnetProd
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetProdId'
+
+  SubnetAdminId:
+    Description: 'ID de la subnet de Admin-Normas'
+    Value: !Ref SubnetAdmin
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetAdminId'
