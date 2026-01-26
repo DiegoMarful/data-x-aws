@@ -4,11 +4,6 @@
   "SubnetDevCidr": "10.1.10.0/24",
   "SubnetProdCidr": "10.1.20.0/24",
   "SubnetAdminCidr": "10.1.30.0/24",
-  "EnablePublicAccess": true,
-  "InstanceType": "t3.medium",
-  "MinSize": 2,
-  "MaxSize": 4,
-  "DatabaseInstanceClass": "db.t3.medium",
-  "BucketRetentionDays": 90,
-  "AlarmEmail": "staging-alerts@empresa.com"
+  "EnableDnsHostnames": "true",
+  "EnableDnsSupport": "true"
 }
