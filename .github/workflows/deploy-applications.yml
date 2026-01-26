@@ -1,0 +1,28 @@
+﻿name: Deploy Applications
+on:
+  push:
+    paths:
+      - 'applications/**'
+    branches: [ main ]
+
+jobs:
+  deploy-lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Deploy Lambda
+        working-directory: applications/lambda-process-docs
+        run: |
+          echo "Deploying Lambda..."
+          # Instalar dependencias si existen
+          if (Test-Path "package.json") {
+            npm ci
+          }
+          # Desplegar con SAM
+          sam deploy --guided --stack-name lambda-process-docs-dev

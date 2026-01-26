@@ -1,0 +1,22 @@
+﻿name: Validate Pull Requests
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Lint CloudFormation
+        run: |
+          echo "Validating CloudFormation templates..."
+          # Instalar cfn-lint si quieres validación estricta
+          pip install cfn-lint
+          cfn-lint infrastructure/templates/*.yaml
+      - name: Validate SAM Template
+        working-directory: applications/lambda-process-docs
+        run: |
+          if (Test-Path "template.yaml") {
+            sam validate
+          }
