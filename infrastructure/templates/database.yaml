@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'BASES DE DATOS - REQUIERE VPC PRIMERO'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'Development'
+    Description: 'Nombre del entorno'
+
+# Resources: COMENTADOS - SE AÑADIRÁN DESPUÉS
+#  DocumentDBCluster:
+#    Type: 'AWS::DocDB::DBCluster'
+#    DependsOn: [VPC, SubnetDev, SubnetProd]  <-- REQUIERE VPC
+#    Properties:
+#      DBClusterIdentifier: !Sub '${EnvironmentName}-docdb-cluster'
+#      MasterUsername: 'admin'
+#      MasterUserPassword: 'TODO-cambiar-en-parameters'
+#      VpcSecurityGroupIds:
+#        - !Ref DatabaseSecurityGroup
+#      DBSubnetGroupName: !Ref DBSubnetGroup
