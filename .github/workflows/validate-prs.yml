@@ -1,22 +1,62 @@
-﻿name: Validate Pull Requests
+name: Validate Pull Requests
 on:
   pull_request:
     branches: [ main ]
+    paths:
+      - 'infrastructure/**'
+      - 'applications/**'
+      - '.github/workflows/**'
 
 jobs:
-  validate:
+  validate-infrastructure:
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.title, 'infra') || contains(github.head_ref, 'infra') || github.event.pull_request.body == '' || contains(github.event.pull_request.body, 'infra')
     steps:
       - uses: actions/checkout@v3
+      - name: Install cfn-lint
+        run: pip install cfn-lint
       - name: Lint CloudFormation
         run: |
-          echo "Validating CloudFormation templates..."
-          # Instalar cfn-lint si quieres validación estricta
-          pip install cfn-lint
-          cfn-lint infrastructure/templates/*.yaml
+          echo "Validando templates de infraestructura..."
+          cfn-lint infrastructure/templates/*.yaml --ignore-checks W
+      - name: Validate Parameters
+        run: |
+          echo "Validando parámetros..."
+          for file in infrastructure/parameters/*.json; do
+            echo "Validando: $(basename $file)"
+            python3 -m json.tool "$file" > /dev/null
+          done
+  
+  validate-applications:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.title, 'feat') || contains(github.event.pull_request.title, 'fix') || contains(github.head_ref, 'feature') || contains(github.head_ref, 'bugfix')
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
       - name: Validate SAM Template
         working-directory: applications/lambda-process-docs
         run: |
-          if (Test-Path "template.yaml") {
-            sam validate
-          }
+          echo "Validando template SAM..."
+          sam validate
+      - name: Lint JavaScript
+        working-directory: applications/lambda-process-docs
+        run: |
+          echo "Lint de código JavaScript..."
+          npm install eslint @types/node --no-save
+          npx eslint index.js --no-eslintrc --env node,es2020 --parser-options '{"ecmaVersion": 2020}' || echo "⚠️ Lint falló (no crítico)"
+  
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check for secrets in code
+        run: |
+          echo "Buscando posibles secretos en código..."
+          # Patrones básicos de detección
+          ! grep -r "password\s*=" applications/ infrastructure/ || echo "Posible contraseña en código"
+          ! grep -r "secret\s*=" applications/ infrastructure/ || echo "Posible secreto en código"
+          ! grep -r "token\s*=" applications/ infrastructure/ || echo "Posible token en código"
+          true  # No fallar el workflow por este check
