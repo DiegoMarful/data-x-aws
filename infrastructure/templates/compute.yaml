@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'COMPUTE - REQUIERE VPC + SECURITY GROUPS'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'Development'
+    Description: 'Nombre del entorno'
+
+# Resources: COMENTADOS - SE AÑADIRÁN DESPUÉS
+#  LambdaSecurityGroup:
+#    Type: 'AWS::EC2::SecurityGroup'
+#    Properties:
+#      GroupDescription: 'Security Group para Lambdas'
+#      VpcId: !ImportValue 'vpc-base-VPCId'  <-- REQUIERE VPC
