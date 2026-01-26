@@ -1,6 +1,14 @@
-﻿[
-  {
-    "ParameterKey": "EnvironmentName",
-    "ParameterValue": "legal-dev"
-  }
-]
+{
+  "EnvironmentName": "dev",
+  "VpcCidr": "10.0.0.0/16",
+  "SubnetDevCidr": "10.0.10.0/24",
+  "SubnetProdCidr": "10.0.20.0/24",
+  "SubnetAdminCidr": "10.0.30.0/24",
+  "EnablePublicAccess": false,
+  "InstanceType": "t3.micro",
+  "MinSize": 1,
+  "MaxSize": 2,
+  "DatabaseInstanceClass": "db.t3.small",
+  "BucketRetentionDays": 30,
+  "AlarmEmail": "dev-team@empresa.com"
+}
