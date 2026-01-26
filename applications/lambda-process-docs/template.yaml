@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Lambda para procesar documentos legales'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'dev'
+    Description: 'Entorno (dev, staging, prod)'
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+  
+  DocumentsBucketName:
+    Type: String
+    Description: 'Nombre del bucket S3 para documentos'
+    Default: ''
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref EnvironmentName
+        LOG_LEVEL: INFO
+
+Resources:
+  # FUNCIÓN LAMBDA PRINCIPAL
+  ProcessDocumentsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'legal-process-docs-${EnvironmentName}'
+      CodeUri: ./
+      Handler: index.handler
+      Description: 'Procesa documentos legales subidos a S3'
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref DocumentsBucketName
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+      Events:
+        S3Trigger:
+          Type: S3
+          Properties:
+            Bucket: !Ref DocumentsBucketName
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: .pdf
+                  - Name: suffix
+                    Value: .docx
+                  - Name: suffix
+                    Value: .txt
+      Tags:
+        Environment: !Ref EnvironmentName
+        Service: LegalProcessor
+
+  # PERMISO DE INVOCACIÓN PARA S3
+  BucketPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProcessDocumentsFunction
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub 'arn:aws:s3:::${DocumentsBucketName}'
+
+Outputs:
+  LambdaFunctionName:
+    Description: 'Nombre de la función Lambda'
+    Value: !Ref ProcessDocumentsFunction
+    Export:
+      Name: !Sub '${EnvironmentName}-ProcessDocumentsLambda'
+  
+  LambdaFunctionArn:
+    Description: 'ARN de la función Lambda'
+    Value: !GetAtt ProcessDocumentsFunction.Arn
+    Export:
+      Name: !Sub '${EnvironmentName}-ProcessDocumentsLambdaArn'
