@@ -59,7 +59,7 @@ jobs:
       
       - name: Setup SAM CLI
         run: |
-          echo "Instalando SAM CLI..."
+          echo "🔧 Instalando SAM CLI..."
           pip install aws-sam-cli
       
       - name: Deploy Lambda Function
