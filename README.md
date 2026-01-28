@@ -1,10 +1,12 @@
 Plataforma Legal en AWS, DATA-X - Documentación del Proyecto
 
------------------------------------------------------------------Descripción General-----------------------------------------------------------------
+Descripción General
+
 Este repositorio contiene la infraestructura como código y las aplicaciones para la Plataforma Legal, una solución basada en AWS para el procesamiento automatizado de documentos legales. El proyecto sigue una arquitectura serverless-first
 y está completamente versionado en Git.
 
------------------------------------------------------------------Arquitectura del Proyecto-----------------------------------------------------------------
+Arquitectura del Proyecto
+
 El proyecto está organizado en dos áreas principales de responsabilidad:
 
 Infraestructura AWS (Carpeta infrastructure/)
@@ -27,7 +29,8 @@ Para la gestión del Equipo de Desarrollo, contiene la lógica de negocio:
 
 Lambda de Procesamiento: Función serverless que procesa automáticamente documentos (PDF, DOCX, TXT) cuando se suben a S3.
 
------------------------------------------------------------------Responsabilidades del Equipo-----------------------------------------------------------------
+Responsabilidades del Equipo
+
 Equipo de Sistemas
 
 - Crear y mantener la infraestructura AWS
@@ -48,7 +51,8 @@ Equipo de Desarrollo
 
 - Documentar APIs y flujos de datos
 
------------------------------------------------------------------Estado Actual del Proyecto-----------------------------------------------------------------
+Estado Actual del Proyecto
+
 
 Estructura completa del repositorio con separación clara de responsabilidades
 
@@ -60,7 +64,8 @@ Código de Lambda funcional con procesamiento de documentos
 
 Pipelines CI/CD configurados (inactivos hasta tener credenciales AWS)
 
------------------------------------------------------------------Pendiente de Implementación-----------------------------------------------------------------
+Pendiente de Implementación
+
 Bases de datos (DocumentDB/RDS) - Requiere VPC primero
 
 Recursos de cómputo (EC2, Auto Scaling) - Requiere VPC y S3
@@ -69,7 +74,8 @@ Balanceador de carga ELB - Solo para producción
 
 Sistema de monitorización (CloudWatch dashboards)
 
------------------------------------------------------------------Flujo de Trabajo con Git-----------------------------------------------------------------
+Flujo de Trabajo con Git
+
 Para cambios en Infraestructura:
 
 - Crear rama con prefijo infra/: git checkout -b infra/nombre-cambio
@@ -90,7 +96,8 @@ Para cambios en Aplicaciones:
 
 - Crear Pull Request y esperar 2 aprobaciones
 
------------------------------------------------------------------Cómo Empezar a Trabajar-----------------------------------------------------------------
+Cómo Empezar a Trabajar
+
 Primeros Pasos
 
 1- Clonar el repositorio: git clone https://github.com/DiegoMarful/data-x-aws.git
