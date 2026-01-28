@@ -118,7 +118,10 @@ Desarrollo Local (Sin AWS)
 
 3- Probar el código localmente: node index.js
 
------------------------------------------------------------------Plan de Despliegue (Cuando Tengamos Acceso AWS)-----------------------------------------------------------------
+
+Plan de Despliegue (Cuando Tengamos Acceso AWS)
+
+
 Mi idea sería hacer algo similar a lo siguiente aunque, como es lógico, estoy abierto a las sugerencias que me podáis comentar sobre cambiar orden, implementar nuevos apartados y/o fases etc. 
 Evidentemente habrá fallos y habrán cosas que se deberán ir modificando así que las fases quedan pendientes de posibles cambios en función de las demoras ocasionadas por los incoveninetes e incidencias que nos vayamos encontrando.
 
@@ -143,7 +146,8 @@ Replicar para producción
 
 Configurar monitorización y alertas
 
------------------------------------------------------------------Seguridad y Mejores Prácticas-----------------------------------------------------------------
+Seguridad y Mejores Prácticas
+
 Configuración Segura
 Las contraseñas y claves secretas NO van en los archivos JSON
 
@@ -153,7 +157,9 @@ Todos los buckets S3 son privados por defecto
 
 La VPC está aislada sin acceso público directo
 
------------------------------------------------------------------Convenciones de Código-----------------------------------------------------------------
+
+Convenciones de Código
+
 
 CloudFormation: 2 espacios de indentación
 
